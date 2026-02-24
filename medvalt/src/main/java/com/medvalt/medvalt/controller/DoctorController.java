@@ -6,7 +6,9 @@ import com.medvalt.medvalt.entity.PatientDoctorAccess;
 import com.medvalt.medvalt.service.DoctorService;
 import com.medvalt.medvalt.service.PatientService;
 import com.medvalt.medvalt.service.PatientDoctorAccessService;
+
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class DoctorController {
         return doctorService.getDoctorById(id);
     }
 
-    // 🔹 Create doctor
+    // 🔹 Create doctor profile
     @PostMapping
     public Doctor createDoctor(@RequestBody Doctor doctor) {
         return doctorService.saveDoctor(doctor);
@@ -51,7 +53,7 @@ public class DoctorController {
         return doctorService.saveDoctor(doctor);
     }
 
-    // 🔹 Delete doctor by ID
+    // 🔹 Delete doctor
     @DeleteMapping("/{id}")
     public void deleteDoctor(@PathVariable Long id) {
         doctorService.deleteDoctor(id);
@@ -60,25 +62,46 @@ public class DoctorController {
     // 🔹 Clear all doctors (testing)
     @DeleteMapping("/clear")
     public String clearDoctors() {
-        doctorService.getAllDoctors().forEach(d -> doctorService.deleteDoctor(d.getId()));
+        doctorService.getAllDoctors()
+                .forEach(d -> doctorService.deleteDoctor(d.getId()));
         return "All doctors deleted!";
     }
 
-    // 🔹 Fetch patient records (with permission check)
-    @GetMapping("/{doctorId}/patient/{patientId}")
-    public Object getPatientRecords(@PathVariable Long doctorId, @PathVariable Long patientId) {
-        boolean hasAccess = accessService.getAccessListForDoctor(doctorId).stream()
-                .anyMatch(a -> a.getPatient().getId().equals(patientId) && a.isGranted());
-        if (!hasAccess) {
-            return "Access denied: Patient " + patientId + " has not granted access to Doctor " + doctorId;
-        }
-
-        return patientService.getPatientById(patientId);
+    // 🔹 Get doctor profile by userId (for dashboard)
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Doctor> getDoctorByUserId(@PathVariable Long userId) {
+        Doctor doctor = doctorService.getDoctorByUserId(userId);
+        return doctor != null
+                ? ResponseEntity.ok(doctor)
+                : ResponseEntity.notFound().build();
     }
 
-    // 🔹 List all patients this doctor has access to
+    // 🔹 Patients who granted access
+    @GetMapping("/{doctorId}/patients")
+    public List<Patient> getPatientsForDoctor(@PathVariable Long doctorId) {
+        return accessService.getPatientsForDoctor(doctorId);
+    }
+
+    // 🔹 Access list for doctor
     @GetMapping("/{doctorId}/accessList")
     public List<PatientDoctorAccess> getDoctorAccessList(@PathVariable Long doctorId) {
         return accessService.getAccessListForDoctor(doctorId);
+    }
+
+    // 🔹 Get patient records with permission check
+    @GetMapping("/{doctorId}/patient/{patientId}")
+    public Object getPatientRecords(@PathVariable Long doctorId,
+                                    @PathVariable Long patientId) {
+
+        boolean hasAccess = accessService.getAccessListForDoctor(doctorId)
+                .stream()
+                .anyMatch(a -> a.getPatient().getId().equals(patientId)
+                        && a.isGranted());
+
+        if (!hasAccess) {
+            return "Access denied: Patient has not granted permission.";
+        }
+
+        return patientService.getPatientById(patientId);
     }
 }

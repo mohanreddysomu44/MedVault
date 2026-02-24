@@ -1,32 +1,33 @@
 package com.medvalt.medvalt.entity;
 
 import jakarta.persistence.*;
-import java.util.List;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "doctors")
 public class Doctor {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // ✅ Proper relationship
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
+    private User user;
 
     private String name;
     private String specialization;
     private String contact;
+    private String hospital;
 
-    @OneToOne
-    @JoinColumn(name = "user_id")
-    @JsonBackReference
-    private User user;
-
-    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
-    private List<PatientDoctorAccess> accessList;
-
-    // --- Getters and Setters ---
+    // --- Getters & Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -37,6 +38,6 @@ public class Doctor {
     public String getContact() { return contact; }
     public void setContact(String contact) { this.contact = contact; }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public String getHospital() { return hospital; }
+    public void setHospital(String hospital) { this.hospital = hospital; }
 }
