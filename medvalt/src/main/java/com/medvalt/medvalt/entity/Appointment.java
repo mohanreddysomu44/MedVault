@@ -1,6 +1,69 @@
+//package com.medvalt.medvalt.entity;
+//
+//import jakarta.persistence.*;
+//import java.time.LocalDate;
+//
+//@Entity
+//public class Appointment {
+//
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    private Long id;
+//
+//    @ManyToOne
+//    @JoinColumn(name = "patient_id")
+//    private Patient patient;
+//
+//    @ManyToOne
+//    @JoinColumn(name = "doctor_id")
+//    private Doctor doctor;
+//
+//    private LocalDate date;
+//    private String timeSlot;
+//
+//    private String status; // PENDING, APPROVED, REJECTED
+//
+//    // ✅ NEW FIELDS
+//    @Column(length = 1000)
+//    private String description;
+//
+//    private String reportFilePath; // store file path
+//
+//    // =============================
+//    // Getters and Setters
+//    // =============================
+//
+//    public Long getId() { return id; }
+//    public void setId(Long id) { this.id = id; }
+//
+//    public Patient getPatient() { return patient; }
+//    public void setPatient(Patient patient) { this.patient = patient; }
+//
+//    public Doctor getDoctor() { return doctor; }
+//    public void setDoctor(Doctor doctor) { this.doctor = doctor; }
+//
+//    public LocalDate getDate() { return date; }
+//    public void setDate(LocalDate date) { this.date = date; }
+//
+//    public String getTimeSlot() { return timeSlot; }
+//    public void setTimeSlot(String timeSlot) { this.timeSlot = timeSlot; }
+//
+//    public String getStatus() { return status; }
+//    public void setStatus(String status) { this.status = status; }
+//
+//    public String getDescription() { return description; }
+//    public void setDescription(String description) { this.description = description; }
+//
+//    public String getReportFilePath() { return reportFilePath; }
+//    public void setReportFilePath(String reportFilePath) { this.reportFilePath = reportFilePath; }
+//}
+
+
 package com.medvalt.medvalt.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 
 @Entity
@@ -23,11 +86,10 @@ public class Appointment {
 
     private String status; // PENDING, APPROVED, REJECTED
 
-    // ✅ NEW FIELDS
     @Column(length = 1000)
     private String description;
 
-    private String reportFilePath; // store file path
+    private String reportFilePath; // stored as e.g. "uploads/1234567890_report.pdf"
 
     // =============================
     // Getters and Setters
@@ -56,4 +118,20 @@ public class Appointment {
 
     public String getReportFilePath() { return reportFilePath; }
     public void setReportFilePath(String reportFilePath) { this.reportFilePath = reportFilePath; }
+
+    /**
+     * ✅ This is what the frontend receives as "report".
+     * It exposes ONLY the filename (e.g. "1234567890_myfile.pdf")
+     * so the React code can build: GET /appointments/report/1234567890_myfile.pdf
+     *
+     * If no report was uploaded, returns null → frontend shows "No report attached"
+     */
+    @JsonProperty("report")
+    public String getReportFilename() {
+        if (reportFilePath == null || reportFilePath.isBlank()) {
+            return null;
+        }
+        // Strip the "uploads/" or "uploads\" prefix, return only filename
+        return Paths.get(reportFilePath).getFileName().toString();
+    }
 }
